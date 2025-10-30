@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: 0BSD
 import subprocess, base64, tempfile, datetime, os, sys, re, pexpect, logging
 from pathlib import Path
 
-# === 設定 ===
+# -----------------------------------------------------------------------------
+# .env読み込み
+# -----------------------------------------------------------------------------
 def load_env_file(path):
     """KEY=VALUE 形式の .env ファイルを読み込んで os.environ に追加"""
     if not Path(path).exists():
@@ -17,7 +20,6 @@ def load_env_file(path):
                 key, val = line.split("=", 1)
                 os.environ[key.strip()] = val.strip()
 
-# === .env 読み込み ===
 ENV_PATH = os.environ.get("ASA_ENV_FILE", "/etc/letsencrypt/hooks.d/asa.env")
 load_env_file(ENV_PATH)
 
@@ -61,7 +63,9 @@ logging.basicConfig(
 )
 
 
-# === Fingerprint / Serial 取得 ===
+# -----------------------------------------------------------------------------
+# Certificate Serial 取得
+# -----------------------------------------------------------------------------
 def get_local_serial():
     out = subprocess.check_output(
         ["openssl", "x509", "-in", FULLCHAIN, "-noout", "-serial"],
@@ -75,7 +79,9 @@ def get_local_serial():
     print(f"[INFO] Local serial: {serial}")
     return serial
 
-# === ASA 接続 ===
+# -----------------------------------------------------------------------------
+# ASA 接続
+# -----------------------------------------------------------------------------
 def connect_asa():
     child = pexpect.spawn(
         f"ssh -o StrictHostKeyChecking=accept-new {ASA_USER}@{ASA_HOST}",
@@ -103,7 +109,10 @@ def connect_asa():
         print("[INFO] Already in enable mode.")
     return child
 
-# === 現在の trustpoint 確認 ===
+# -----------------------------------------------------------------------------
+# 現在の trustpoint 確認
+# -----------------------------------------------------------------------------
+
 def get_current_trustpoint(child):
     child.sendline("show run | include ssl trust-point")
     child.expect("#", timeout=10)
@@ -113,7 +122,9 @@ def get_current_trustpoint(child):
     print(f"[INFO] Current trustpoint: {tp or '(none)'}")
     return tp
 
-# === ASA 側の証明書シリアルを取得 ===
+# -----------------------------------------------------------------------------
+# ASA 側の証明書シリアルを取得
+# -----------------------------------------------------------------------------
 def get_asa_serial(child, tp_name):
     if not tp_name:
         return None
@@ -128,22 +139,26 @@ def get_asa_serial(child, tp_name):
     print(f"[INFO] ASA serial for {tp_name}: {serial}")
     return serial
 
-# === PKCS#12 生成 (Base64) ===
+# -----------------------------------------------------------------------------
+# PKCS#12 生成 (Base64)
+# -----------------------------------------------------------------------------
 def generate_p12_b64():
-    tmp = tempfile.NamedTemporaryFile(delete=True, suffix=".p12")
-    cmd = [
-        "openssl", "pkcs12", "-export",
-        "-in", FULLCHAIN, "-inkey", PRIVKEY,
-        "-out", tmp.name, "-passout", f"pass:{PKCS12_PASS}"
-    ]
-    subprocess.run(cmd, check=True)
-    with open(tmp.name, "rb") as f:
-        b64 = base64.encodebytes(f.read()).decode("ascii")
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".p12") as tmp:
+        cmd = [
+            "openssl", "pkcs12", "-export",
+            "-in", FULLCHAIN, "-inkey", PRIVKEY,
+            "-out", tmp.name, "-passout", f"pass:{PKCS12_PASS}"
+        ]
+        subprocess.run(cmd, check=True, stderr=subprocess.DEVNULL)
+        with open(tmp.name, "rb") as f:
+            b64 = base64.encodebytes(f.read()).decode("ascii")
     os.unlink(tmp.name)
     print(f"[INFO] Generated PKCS#12 and Base64 encoded ({len(b64)} bytes)")
     return b64
 
-# === trustpoint 削除 ===
+# -----------------------------------------------------------------------------
+# Trustpoint 削除
+# -----------------------------------------------------------------------------
 def delete_trustpoint(child, tp_name):
     if not tp_name:
         return
@@ -175,7 +190,9 @@ def delete_trustpoint(child, tp_name):
     child.expect("#")
     print(f"[INFO] Trustpoint {tp_name} and its certificate chain removed.")
 
-# === 新しい trustpoint 登録 ===
+# -----------------------------------------------------------------------------
+# 新しい trustpoint 登録
+# -----------------------------------------------------------------------------
 def import_new_cert(child, b64data):
     ts = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
     tp_name = f"LE-Portal-{ts}"
@@ -203,7 +220,9 @@ def import_new_cert(child, b64data):
     print(f"[OK] ASA trustpoint updated to {tp_name}")
     return tp_name
 
-# === メイン処理 ===
+# -----------------------------------------------------------------------------
+# メイン処理
+# -----------------------------------------------------------------------------
 def main():
     local_serial = get_local_serial()
     child = connect_asa()

@@ -5,6 +5,7 @@ Let’s Encrypt などで取得した **公開 TLS 証明書を Cisco ASA へ自
 
 > **注意**: 公開 TLS 証明書の最長有効期間は今後さらに短縮される見込みです（現時点では最大 **47 日**）。
 > 証明書の有効期間短縮は CA/B Forum Ballot によって変動するため、運用前に一次情報をご確認ください。
+<img width="1229" height="625" alt="Screenshot 2025-10-28 at 15 14 32" src="https://github.com/user-attachments/assets/c511ff2f-6b89-439a-838f-92720b5ec743" />
 
 ---
 

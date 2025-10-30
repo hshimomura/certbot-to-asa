@@ -18,7 +18,8 @@ def load_env_file(path):
                 os.environ[key.strip()] = val.strip()
 
 # === .env 読み込み ===
-load_env_file("/etc/letsencrypt/hooks.d/asa.env")
+ENV_PATH = os.environ.get("ASA_ENV_FILE", "/etc/letsencrypt/hooks.d/asa.env")
+load_env_file(ENV_PATH)
 
 # .env内の値を優先して環境変数から読む
 ASA_HOST = os.environ.get("ASA_HOST", "asa")
@@ -82,7 +83,7 @@ def connect_asa():
     )
     child.expect("[Pp]assword:")
     child.sendline(ASA_PASS_LOGIN)
-    i = child.expect([">", "#", "Permission denied", pexpect.TIMEOUT], timeout=20)
+    i = child.expect([">", "#", "Permission denied", pexpect.TIMEOUT], timeout=30)
     if i == 2:
         print("[ERR] SSH login failed: Permission denied.")
         sys.exit(1)
@@ -198,7 +199,7 @@ def import_new_cert(child, b64data):
     child.sendline("end")
     child.expect("#")
     child.sendline("write memory")
-    child.expect("#", timeout=60)
+    child.expect(["OK", "#"], timeout=90)
     print(f"[OK] ASA trustpoint updated to {tp_name}")
     return tp_name
 

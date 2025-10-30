@@ -12,6 +12,22 @@ Designed for environments that expose public services such as **Web VPN / AnyCon
 
 ---
 
+### ⚠️ Note on Certificate Lifetime Reduction
+
+The **maximum validity period of publicly trusted TLS certificates** will be **gradually reduced** according to the CA/Browser Forum Ballot **SC-081 v3** (“Introduce Schedule of Reducing Validity and Data Reuse Periods”).
+Under this proposal, the maximum lifetime will shrink in stages — ultimately reaching **47 days**.
+
+* **Source:** [CA/Browser Forum Ballot SC-081 v3 (2025-04-11)](https://cabforum.org/2025/04/11/ballot-sc081v3-introduce-schedule-of-reducing-validity-and-data-reuse-periods/)
+* **Summary:** gradual reduction from 398 days → 200 days → 100 days → **47 days** (final stage expected around 2029)
+* **Reference article:** [DigiCert Blog — *TLS Certificate Lifetimes Will Officially Reduce to 47 Days*](https://www.digicert.com/blog/tls-certificate-lifetimes-will-officially-reduce-to-47-days)
+
+This industry-wide change emphasizes **shorter certificate lifetimes** to minimize key-compromise risk and improve ecosystem agility.
+Automation tools like this *deploy hook* are therefore becoming **essential** for maintaining up-to-date certificates on appliances such as Cisco ASA.
+
+
+
+---
+
 ## Features
 
 * Automatically triggered by Certbot’s **deploy hook** immediately after renewal

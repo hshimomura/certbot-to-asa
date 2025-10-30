@@ -9,6 +9,19 @@ Let’s Encrypt などで取得した **公開 TLS 証明書を Cisco ASA へ自
 
 ---
 
+### ⚠️ 証明書有効期間短縮について
+
+CA/Browser Forum により、公開 TLS 証明書の最長有効期間は段階的に短縮され、最終的には **47 日** となる予定です（Ballot **SC-081 v3**, 2025 年 4 月 11 日発表）。
+
+* **出典:** [CA/Browser Forum Ballot SC-081 v3 (2025-04-11)](https://cabforum.org/2025/04/11/ballot-sc081v3-introduce-schedule-of-reducing-validity-and-data-reuse-periods/)
+* **概要:** 398 日 → 200 日 → 100 日 → **47 日** へ段階的短縮（最終段階は 2029 年頃）
+* **参考:** [DigiCert ブログ — *TLS Certificate Lifetimes Will Officially Reduce to 47 Days*](https://www.digicert.com/blog/tls-certificate-lifetimes-will-officially-reduce-to-47-days)
+
+この短縮は、秘密鍵漏えいリスクの低減と証明書運用の俊敏化を目的としており、
+今後は **自動更新フック（deploy hook）による自動反映** が実運用上の前提となります。
+
+---
+
 ## 特長
 
 * Certbot の **deploy hook** で証明書更新直後に自動適用

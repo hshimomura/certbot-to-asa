@@ -107,6 +107,9 @@ def connect_asa():
         print("[INFO] Entered enable mode successfully.")
     else:
         print("[INFO] Already in enable mode.")
+    # Disable terminal paging
+    child.sendline("terminal pager 0")
+    child.expect("#", timeout=10)
     return child
 
 # -----------------------------------------------------------------------------
